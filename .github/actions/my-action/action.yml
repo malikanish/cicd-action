@@ -1,4 +1,3 @@
-# .github/actions/my-action/action.yml
 name: 'My Custom Action'
 description: 'Custom action for Node.js deployment'
 inputs:
@@ -17,7 +16,6 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
     
     - name: Install dependencies
       shell: bash
