@@ -1,0 +1,17 @@
+name: 'My Custom Action'
+description: 'Custom action for Node.js deployment'
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: true
+    default: '18'
+  environment:
+    description: 'Deployment environment'
+    required: true
+    default: 'development'
+outputs:
+  build-status:
+    description: 'Build completion status'
+runs:
+  using: 'node20'
+  main: 'index.js'
