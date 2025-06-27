@@ -24,12 +24,12 @@ runs:
     - name: Display Environment Info
       shell: bash
       run: |
-        echo "🚀 Setting up Node.js ${{ inputs.node-version }} for ${{ inputs.environment }}"
-        echo "📦 Dependencies installed successfully"
+        echo "Setting up Node.js ${{ inputs.node-version }} for ${{ inputs.environment }}"
+        echo " Dependencies installed successfully"
     
     - name: Start Hello World App
       shell: bash
       run: |
-        echo "🌟 Starting Hello World Application..."
-        timeout 10s npm start || echo "✅ App started successfully!"
-        echo "✨ Deployment completed for ${{ inputs.environment }}!"
+        echo "Starting Hello World Application..."
+        timeout 10s npm start || echo "App started successfully!"
+        echo " Deployment completed for ${{ inputs.environment }}!"
