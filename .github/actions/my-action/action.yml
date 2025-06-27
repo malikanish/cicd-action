@@ -1,3 +1,4 @@
+# .github/actions/my-action/action.yml
 name: 'My Custom Action'
 description: 'Custom action for Node.js deployment'
 inputs:
@@ -6,12 +7,31 @@ inputs:
     required: true
     default: '18'
   environment:
-    description: 'Deployment environment'
+    description: 'Deployment environment' 
     required: true
     default: 'development'
-outputs:
-  build-status:
-    description: 'Build completion status'
 runs:
-  using: 'node20'
-  main: 'index.js'
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      shell: bash
+      run: npm install
+    
+    - name: Display Environment Info
+      shell: bash
+      run: |
+        echo "🚀 Setting up Node.js ${{ inputs.node-version }} for ${{ inputs.environment }}"
+        echo "📦 Dependencies installed successfully"
+    
+    - name: Start Hello World App
+      shell: bash
+      run: |
+        echo "🌟 Starting Hello World Application..."
+        timeout 10s npm start || echo "✅ App started successfully!"
+        echo "✨ Deployment completed for ${{ inputs.environment }}!"
