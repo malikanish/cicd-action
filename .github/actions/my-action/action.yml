@@ -20,12 +20,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: npm install
-    
-    - name: Display Environment Info
-      shell: bash
-      run: |
-        echo "Setting up Node.js ${{ inputs.node-version }} for ${{ inputs.environment }}"
-        echo " Dependencies installed successfully"
+  
     
     - name: Start Hello World App
       shell: bash
