@@ -1,10 +1,10 @@
 name: 'Deploy Node.js to Docker'
-description: 'Build and deploy Node.js application in Docker container'
+description: 'Build and run a Node.js app in a Docker container'
 author: 'Your Name'
 
 inputs:
   port:
-    description: 'Port to run the application on'
+    description: 'Port to expose'
     required: false
     default: '3000'
   container-name:
@@ -19,90 +19,28 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
     - name: Build Docker Image
       shell: bash
       run: |
-        docker build -t ${{ inputs.image-name }}:latest .
-        echo "image-id=$(docker images -q ${{ inputs.image-name }}:latest)" >> $GITHUB_OUTPUT
-        
-    - name: Stop existing container (if any)
+        docker build -t ${{ inputs.image-name }} .
+
+    - name: Stop & Remove Old Container
       shell: bash
       run: |
         docker stop ${{ inputs.container-name }} 2>/dev/null || true
         docker rm ${{ inputs.container-name }} 2>/dev/null || true
-        
-    - name: Run Docker Container
+
+    - name: Run New Container
       shell: bash
       run: |
-        CONTAINER_ID=$(docker run -d \
+        docker run -d \
           --name ${{ inputs.container-name }} \
           -p ${{ inputs.port }}:3000 \
-          --restart unless-stopped \
-          --health-cmd="curl -f http://localhost:3000/health || exit 1" \
-          --health-interval=30s \
-          --health-timeout=10s \
-          --health-retries=3 \
-          ${{ inputs.image-name }}:latest)
-        echo "container-id=$CONTAINER_ID" >> $GITHUB_OUTPUT
-        echo "Container started with ID: $CONTAINER_ID"
-        
-    - name: Wait for container to be ready
+          ${{ inputs.image-name }}
+
+    - name: Show Deployment Info
       shell: bash
       run: |
-        echo "Waiting for container to be ready..."
-        
-        # Wait for container to be running (max 60 seconds)
-        echo "Checking container status..."
-        for i in {1..30}; do
-          STATUS=$(docker inspect -f '{{.State.Status}}' ${{ inputs.container-name }} 2>/dev/null || echo "not-found")
-          echo "Attempt $i: Container status = $STATUS"
-          
-          if [ "$STATUS" = "running" ]; then
-            echo "✅ Container is running!"
-            break
-          elif [ "$STATUS" = "exited" ] || [ "$STATUS" = "dead" ]; then
-            echo "❌ Container failed to start. Status: $STATUS"
-            echo "Container logs:"
-            docker logs ${{ inputs.container-name }}
-            exit 1
-          fi
-          
-          sleep 2
-        done
-        
-        # Wait for application to respond (max 60 seconds)
-        echo "Checking application health..."
-        for i in {1..30}; do
-          echo "Health check attempt $i..."
-          if curl -f -s http://localhost:${{ inputs.port }}/health > /dev/null 2>&1; then
-            echo "✅ Application is healthy!"
-            break
-          elif [ $i -eq 30 ]; then
-            echo "❌ Application health check failed after 30 attempts"
-            echo "Container logs:"
-            docker logs ${{ inputs.container-name }}
-            exit 1
-          fi
-          sleep 2
-        done
-        
-        echo "🎉 Container is ready and healthy!"
-        
-    - name: Show deployment info
-      shell: bash
-      run: |
-        echo "=== Deployment Summary ==="
-        echo "Container Name: ${{ inputs.container-name }}"
-        echo "Image: ${{ inputs.image-name }}:latest"
-        echo "Port: ${{ inputs.port }}"
-        echo "Container ID: $(docker inspect -f '{{.Id}}' ${{ inputs.container-name }})"
-        echo "Status: $(docker inspect -f '{{.State.Status}}' ${{ inputs.container-name }})"
-        echo ""
-        echo "=== Container Details ==="
-        docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-        echo ""
-        echo "=== Recent Logs ==="
-        docker logs ${{ inputs.container-name }} --tail 20
+        echo "App is running at http://localhost:${{ inputs.port }}"
+        docker ps --filter "name=${{ inputs.container-name }}"
+        docker logs ${{ inputs.container-name }} --tail 10
