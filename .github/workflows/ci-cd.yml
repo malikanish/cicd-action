@@ -9,11 +9,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Deploy with Custom Action
         id: deploy
         uses: ./ 
@@ -21,15 +21,15 @@ jobs:
           port: '3000'
           container-name: 'my-nodejs-app'
           image-name: 'nodejs-production'
-          
+
       - name: Show deployment info
         run: |
           echo "Container ID: ${{ steps.deploy.outputs.container-id }}"
           echo "Image ID: ${{ steps.deploy.outputs.image-id }}"
-          
+
       - name: Test deployment
         run: |
           sleep 10
           curl -f http://localhost:3000/ || exit 1
           curl -f http://localhost:3000/health || exit 1
-          echo "✅ Application is running successfully!
+          echo "✅ Application is running successfully!"
