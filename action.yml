@@ -42,9 +42,7 @@ runs:
       shell: bash
       run: |
         echo "App is running at http://localhost:${{ inputs.port }}"
-        echo ""
         echo "=== Running Containers ==="
         docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
-        echo ""
-        echo "=== Container Logs ==="
+        echo "=== Logs ==="
         docker logs ${{ inputs.container-name }} --tail 10
