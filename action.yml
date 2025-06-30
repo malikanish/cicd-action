@@ -41,6 +41,10 @@ runs:
           --name ${{ inputs.container-name }} \
           -p ${{ inputs.port }}:3000 \
           --restart unless-stopped \
+          --health-cmd="curl -f http://localhost:3000/health || exit 1" \
+          --health-interval=30s \
+          --health-timeout=10s \
+          --health-retries=3 \
           ${{ inputs.image-name }}:latest)
         echo "container-id=$CONTAINER_ID" >> $GITHUB_OUTPUT
         echo "Container started with ID: $CONTAINER_ID"
@@ -49,11 +53,56 @@ runs:
       shell: bash
       run: |
         echo "Waiting for container to be ready..."
-        timeout 60 bash -c 'until docker exec ${{ inputs.container-name }} curl -f http://localhost:3000/health; do sleep 2; done'
-        echo "Container is ready!"
         
-    - name: Show container logs
+        # Wait for container to be running (max 60 seconds)
+        echo "Checking container status..."
+        for i in {1..30}; do
+          STATUS=$(docker inspect -f '{{.State.Status}}' ${{ inputs.container-name }} 2>/dev/null || echo "not-found")
+          echo "Attempt $i: Container status = $STATUS"
+          
+          if [ "$STATUS" = "running" ]; then
+            echo "✅ Container is running!"
+            break
+          elif [ "$STATUS" = "exited" ] || [ "$STATUS" = "dead" ]; then
+            echo "❌ Container failed to start. Status: $STATUS"
+            echo "Container logs:"
+            docker logs ${{ inputs.container-name }}
+            exit 1
+          fi
+          
+          sleep 2
+        done
+        
+        # Wait for application to respond (max 60 seconds)
+        echo "Checking application health..."
+        for i in {1..30}; do
+          echo "Health check attempt $i..."
+          if curl -f -s http://localhost:${{ inputs.port }}/health > /dev/null 2>&1; then
+            echo "✅ Application is healthy!"
+            break
+          elif [ $i -eq 30 ]; then
+            echo "❌ Application health check failed after 30 attempts"
+            echo "Container logs:"
+            docker logs ${{ inputs.container-name }}
+            exit 1
+          fi
+          sleep 2
+        done
+        
+        echo "🎉 Container is ready and healthy!"
+        
+    - name: Show deployment info
       shell: bash
       run: |
-        echo "=== Container Logs ==="
-        docker logs ${{ inputs.container-name }} --tail 50
+        echo "=== Deployment Summary ==="
+        echo "Container Name: ${{ inputs.container-name }}"
+        echo "Image: ${{ inputs.image-name }}:latest"
+        echo "Port: ${{ inputs.port }}"
+        echo "Container ID: $(docker inspect -f '{{.Id}}' ${{ inputs.container-name }})"
+        echo "Status: $(docker inspect -f '{{.State.Status}}' ${{ inputs.container-name }})"
+        echo ""
+        echo "=== Container Details ==="
+        docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        echo ""
+        echo "=== Recent Logs ==="
+        docker logs ${{ inputs.container-name }} --tail 20
