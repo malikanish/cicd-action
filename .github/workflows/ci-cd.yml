@@ -1,24 +1,35 @@
-name: Hello World CI/CD
+name: Deploy Application
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy with Custom Action
+        id: deploy
+        uses: ./ 
         with:
-          node-version: '18'
-      
-      - name: Use Custom Action
-        uses: ./.github/actions/my-action
-        with:
-          node-version: '18'
-          environment: 'development'
+          port: '3000'
+          container-name: 'my-nodejs-app'
+          image-name: 'nodejs-production'
+          
+      - name: Show deployment info
+        run: |
+          echo "Container ID: ${{ steps.deploy.outputs.container-id }}"
+          echo "Image ID: ${{ steps.deploy.outputs.image-id }}"
+          
+      - name: Test deployment
+        run: |
+          sleep 10
+          curl -f http://localhost:3000/ || exit 1
+          curl -f http://localhost:3000/health || exit 1
+          echo "✅ Application is running successfully!
