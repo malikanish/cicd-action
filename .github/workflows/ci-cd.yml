@@ -1,35 +1,46 @@
-name: Deploy Application
+name: Deploy Node.js App to EC2 using Custom Action
 
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: ⬇️ Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy with Custom Action
-        id: deploy
-        uses: ./ 
-        with:
-          port: '3000'
-          container-name: 'my-nodejs-app'
-          image-name: 'nodejs-production'
-
-      - name: Show deployment info
+      - name: 🔐 Setup SSH Key
         run: |
-          echo "Container ID: ${{ steps.deploy.outputs.container-id }}"
-          echo "Image ID: ${{ steps.deploy.outputs.image-id }}"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Test deployment
+      - name: 📂 Copy project to EC2
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/id_rsa" ./ \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/app
+
+      - name: 🚀 Run Custom Action on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/app
+            chmod -R +x .github/actions/deploy-nodejs
+            echo "👉 Running custom deploy action..."
+            echo "::group::Run Node App via Docker"
+            docker build -t nodejs-production .
+            docker stop my-nodejs-app 2>/dev/null || true
+            docker rm my-nodejs-app 2>/dev/null || true
+            docker run -d --name my-nodejs-app -p 3000:3000 nodejs-production
+            docker ps
+            echo "::endgroup::"
+          EOF
+
+      - name: ✅ Verify Deployment
         run: |
           sleep 10
-          curl -f http://localhost:3000/ || exit 1
-          curl -f http://localhost:3000/health || exit 1
-          echo "✅ Application is running successfully!"
+          curl -f http://${{ secrets.EC2_HOST }}:3000/ || exit 1
+          echo "✅ App is live at http://${{ secrets.EC2_HOST }}:3000"

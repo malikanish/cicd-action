@@ -1,6 +1,6 @@
 name: 'Deploy Node.js to Docker'
 description: 'Build and run a Node.js app in a Docker container'
-author: 'Your Name'
+author: 'Anish'
 
 inputs:
   port:
@@ -42,7 +42,5 @@ runs:
       shell: bash
       run: |
         echo "App is running at http://localhost:${{ inputs.port }}"
-        echo "=== Running Containers ==="
         docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
-        echo "=== Logs ==="
         docker logs ${{ inputs.container-name }} --tail 10
