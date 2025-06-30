@@ -2,11 +2,12 @@ const express = require('express');
 const app = express();
 
 const PORT = 3000;
+const HOST = '0.0.0.0'; 
 
 app.get('/', (req, res) => {
-  res.send('🚀 Hello from Dockerized Node.js App on EC2!');
+  res.send('✅ Node.js App is running inside Docker on EC2!');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`App running on http://0.0.0.0:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`✅ App is running at http://${HOST}:${PORT}`);
 });
