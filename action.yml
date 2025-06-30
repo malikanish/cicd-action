@@ -24,7 +24,7 @@ runs:
       run: |
         docker build -t ${{ inputs.image-name }} .
 
-    - name: Stop & Remove Old Container
+    - name: Stop & Remove Old Container (if any)
       shell: bash
       run: |
         docker stop ${{ inputs.container-name }} 2>/dev/null || true
@@ -42,5 +42,9 @@ runs:
       shell: bash
       run: |
         echo "App is running at http://localhost:${{ inputs.port }}"
-        docker ps --filter "name=${{ inputs.container-name }}"
+        echo ""
+        echo "=== Running Containers ==="
+        docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
+        echo ""
+        echo "=== Container Logs ==="
         docker logs ${{ inputs.container-name }} --tail 10
