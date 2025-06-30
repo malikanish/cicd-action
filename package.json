@@ -9,12 +9,5 @@
   },
   "dependencies": {
     "express": "^4.21.2"
-  },
-  "keywords": [
-    "nodejs",
-    "hello-world",
-    "express"
-  ],
-  "author": "Your Name",
-  "license": "MIT"
+  }
 }
