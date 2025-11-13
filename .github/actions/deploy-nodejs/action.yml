@@ -44,3 +44,5 @@ runs:
         echo "App is running at http://localhost:${{ inputs.port }}"
         docker ps --filter "name=${{ inputs.container-name }}" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
         docker logs ${{ inputs.container-name }} --tail 10
+
+

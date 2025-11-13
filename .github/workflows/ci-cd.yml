@@ -56,3 +56,5 @@ jobs:
             echo "=== 📝 Logs ==="
             docker logs my-nodejs-app --tail 20
           EOF
+
+          
