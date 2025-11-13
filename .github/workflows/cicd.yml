@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: tenki-standard-autoscale
+    runs-on: tenki-standard-large-plus-16c-32g
 
     steps:
       - name: ⬇️ Checkout code
